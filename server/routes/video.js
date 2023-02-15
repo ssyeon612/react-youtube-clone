@@ -57,8 +57,16 @@ router.get("/getVideos", (req, res) => {
         });
 });
 
+router.post("/getVideoDetail", (req, res) => {
+    Video.findOne({ _id: req.body.videoId })
+        .populate("writer")
+        .exec((err, videoDetail) => {
+            if (err) return res.status(400).send(err);
+            return res.status(200).json({ success: true, videoDetail });
+        });
+});
+
 router.post("/thumbnail", (req, res) => {
-    console.log("thumbnail::");
     // 썸네일 생성하고 비디로 러닝타임 가져오기
     let filePath = "";
     let fileDuration = "";
@@ -72,9 +80,6 @@ router.post("/thumbnail", (req, res) => {
     // 썸네일 생성
     ffmpeg(req.body.url)
         .on("filenames", function (filenames) {
-            console.log("will generate" + filenames.join(","));
-            console.log(filenames);
-
             filePath = "uploads/thumbnails/" + filenames[0];
         })
         .on("end", function () {
