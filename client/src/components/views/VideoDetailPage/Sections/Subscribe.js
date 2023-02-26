@@ -6,7 +6,7 @@ function Subscribe(props) {
     const [Subscribed, setSubscribed] = useState(false);
 
     useEffect(() => {
-        let variable = { userTo: props.userTo };
+        let variable = { userFrom: localStorage.getItem("userId") };
 
         Axios.post("/api/subscribe/subscribeNumber", variable).then((response) => {
             if (response.data.success) {

@@ -3,6 +3,7 @@ const router = express.Router();
 const { Video } = require("../models/Video");
 const multer = require("multer");
 const ffmpeg = require("fluent-ffmpeg");
+const { Subscriber } = require("../models/Subscriber");
 
 // STORAGE MULTER CONFIG
 let storage = multer.diskStorage({
@@ -34,15 +35,6 @@ router.post("/uploadfiles", (req, res) => {
             return res.json({ success: false, err });
         }
         return res.json({ success: true, url: res.req.file.path, fileName: res.req.file.filename });
-    });
-});
-
-router.post("/uploadVideo", (req, res) => {
-    // 비디오 정보 저장
-    const video = new Video(req.body);
-    video.save((err, doc) => {
-        if (err) return res.json({ success: false, err });
-        res.status(200).json({ success: true });
     });
 });
 
@@ -98,6 +90,35 @@ router.post("/thumbnail", (req, res) => {
             // '%b' : input basename (filename w/o extension)
             filename: "thumbnail=%b.png",
         });
+});
+
+router.post("/uploadVideo", (req, res) => {
+    // 비디오 정보 저장
+    const video = new Video(req.body);
+    video.save((err, doc) => {
+        if (err) return res.json({ success: false, err });
+        res.status(200).json({ success: true });
+    });
+});
+
+router.post("/getSubscriptionVideos", (req, res) => {
+    // 구독하는 사람들 찾기
+    Subscriber.find({ userFrom: req.body.userFrom }).exec((err, subscriberInfo) => {
+        if (err) return res.status(400).send(err);
+
+        let subscribedUser = [];
+        subscriberInfo.map((subscriber, i) => {
+            subscribedUser.push(subscriber.userTo);
+        });
+
+        // 비디오 가져오기
+        Video.find({ writer: { $in: subscribedUser } })
+            .populate("writer")
+            .exec((err, videos) => {
+                if (err) return res.status(400).send(err);
+                res.status(200).json({ success: true, videos });
+            });
+    });
 });
 
 module.exports = router;
